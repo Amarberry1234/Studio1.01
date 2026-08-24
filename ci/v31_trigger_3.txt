@@ -1,0 +1,1 @@
+Trigger V3.1 verification with exact text-chunk payload reconstruction.
