@@ -3,6 +3,8 @@ name: AMARBERRY v3 Godot 4.7.2 Runtime Validation
 on:
   push:
     branches: ["amarberry-v3-runtime-ci"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -107,3 +109,11 @@ jobs:
           ./godot --headless --verbose --path project res://tests/runtime/integration_3d.tscn --quit-after 1800 2>&1 | tee integration.log
           grep -F "AMARBERRY_V3_INTEGRATION: PASS" integration.log
           ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" integration.log
+
+      - name: Upload verified V3 project
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarberry-v3-godot-verified-project
+          path: project
+          if-no-files-found: error
