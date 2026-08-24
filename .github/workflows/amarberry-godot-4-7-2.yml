@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./godot --headless --path project res://tests/runtime/smoke_3d.tscn --quit-after 600 2>&1 | tee smoke.log
+          ./godot --headless --verbose --path project res://tests/runtime/smoke_3d.tscn --quit-after 600 2>&1 | tee smoke.log
           grep -F "AMARBERRY_3D_SMOKE: PASS" smoke.log
           ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" smoke.log
 
