@@ -43,6 +43,14 @@ jobs:
           PY
           test -z "$(grep -R ':=' project --include='*.gd' || true)"
 
+      - name: Diagnose audio implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '===== AUDIO IMPLEMENTATION ====='
+          grep -n -C 18 -E 'AudioStreamPlayer|SFX_LEVELUP|func .*sfx|func .*audio|\.play\(\)' project/scripts/main_3d.gd || true
+          echo '===== END AUDIO IMPLEMENTATION ====='
+
       - name: Install official Godot 4.7.2
         shell: bash
         run: |
