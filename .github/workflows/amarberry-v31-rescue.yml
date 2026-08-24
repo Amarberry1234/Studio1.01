@@ -1,0 +1,89 @@
+name: AMARBERRY v3.1 Rescue Godot 4.7.2
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  rescue-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract exact V3.1 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "2bb2a6b8f0ee6f39336e4a8ae3491d48935cbd5695f53389c3e5844ca4ebfb15  ci/v31_code_payload.tar.gz" | sha256sum -c -
+          mkdir project
+          tar -xzf ci/v31_code_payload.tar.gz -C project
+          test -z "$(grep -R ':=' project --include='*.gd' || true)"
+          sha256sum project/scripts/*.gd project/tests/runtime/*.gd project/project.godot
+
+      - name: Generate deterministic CI media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct,zlib,wave
+          r=Path('project'); (r/'textures/heroes').mkdir(parents=True,exist_ok=True); (r/'textures/aliens').mkdir(parents=True,exist_ok=True); (r/'audio').mkdir(parents=True,exist_ok=True)
+          def png(p,c):
+              w=h=96; rows=[]
+              for y in range(h):
+                  row=bytearray()
+                  for x in range(w): row+=bytes((c[0],c[1],c[2],c[3] if 7<x<89 and 7<y<89 else 0))
+                  rows.append(b'\x00'+bytes(row))
+              raw=b''.join(rows)
+              def ch(t,d): return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+              Path(p).write_bytes(b'\x89PNG\r\n\x1a\n'+ch(b'IHDR',struct.pack('>IIBBBBB',w,h,8,6,0,0,0))+ch(b'IDAT',zlib.compress(raw))+ch(b'IEND',b''))
+          png(r/'textures/ground.png',(80,92,105,255)); png(r/'textures/icon.png',(220,45,60,255))
+          colors={'commando':(220,45,55,255),'guardian':(50,135,255,255),'engineer':(235,120,35,255),'sniper':(165,65,245,255),'dashberry':(245,70,165,255),'rageberry':(235,55,30,255)}
+          for n,c in colors.items(): png(r/'textures/heroes'/f'{n}.png',c)
+          aliens={'swarmer':(65,220,105,255),'hunter':(65,160,235,255),'spitter':(170,65,235,255),'stalker':(90,240,180,255),'artillery':(220,90,235,255),'breeder':(180,45,210,255),'warden':(220,35,95,255),'matriarch':(205,45,225,255),'boss':(220,35,95,255)}
+          for n,c in aliens.items(): png(r/'textures/aliens'/f'{n}.png',c)
+          for n in ['rifle','shotgun','pulse','launcher','explosion','pickup','levelup','hurt','acid','ambient']:
+              with wave.open(str(r/'audio'/f'{n}.wav'),'wb') as f: f.setnchannels(1); f.setsampwidth(2); f.setframerate(22050); f.writeframes(b'\x00\x00'*5512)
+          PY
+
+      - name: Install official Godot 4.7.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+          chmod +x godot
+          ./godot --version
+
+      - name: Import and parse V3.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --editor --path project --quit 2>&1 | tee import.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|Invalid assignment|leaked at exit|resources still in use" import.log
+
+      - name: V3.1 smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --verbose --path project res://tests/runtime/smoke_3d.tscn --quit-after 900 2>&1 | tee smoke.log
+          grep -F "AMARBERRY_V31_SMOKE: PASS" smoke.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|Invalid assignment|leaked at exit|resources still in use" smoke.log
+
+      - name: V3.1 mission integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --verbose --path project res://tests/runtime/integration_3d.tscn --quit-after 1800 2>&1 | tee integration.log
+          grep -F "AMARBERRY_V31_INTEGRATION: PASS" integration.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|Invalid assignment|leaked at exit|resources still in use" integration.log
+
+      - name: Upload verified V3.1 project
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarberry-v31-rescue-verified-project
+          path: project
+          if-no-files-found: error
