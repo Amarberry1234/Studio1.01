@@ -17,10 +17,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat ci/payload_00.b64 ci/payload_01.b64 ci/payload_02.b64 ci/payload_03.b64 ci/payload_04.b64 > payload.b64
-          base64 -d payload.b64 > payload.tar.gz
           mkdir -p project
-          tar -xzf payload.tar.gz -C project
+          tar -xzf ci/payload_v2.tar.gz -C project
           python3 - <<'PY'
           from pathlib import Path
           import struct, zlib, wave
@@ -56,7 +54,7 @@ jobs:
         run: |
           set -euo pipefail
           ./godot --headless --editor --path project --quit 2>&1 | tee import.log
-          ! grep -E "SCRIPT ERROR|Parse Error|Cannot infer the type" import.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" import.log
 
       - name: Godot smoke test
         shell: bash
@@ -64,7 +62,7 @@ jobs:
           set -euo pipefail
           ./godot --headless --path project res://tests/runtime/smoke_3d.tscn --quit-after 600 2>&1 | tee smoke.log
           grep -F "AMARBERRY_3D_SMOKE: PASS" smoke.log
-          ! grep -E "SCRIPT ERROR|Parse Error|Cannot infer the type" smoke.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" smoke.log
 
       - name: Godot mission integration test
         shell: bash
@@ -72,4 +70,4 @@ jobs:
           set -euo pipefail
           ./godot --headless --path project res://tests/runtime/integration_3d.tscn --quit-after 1200 2>&1 | tee integration.log
           grep -F "AMARBERRY_3D_INTEGRATION: PASS" integration.log
-          ! grep -E "SCRIPT ERROR|Parse Error|Cannot infer the type" integration.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" integration.log
