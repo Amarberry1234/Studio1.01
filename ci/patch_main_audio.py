@@ -24,4 +24,20 @@ if old_sfx not in s:
     raise SystemExit('play_sfx block not found')
 s = s.replace(old_sfx, new_sfx, 1)
 
+# Runtime tree ordering. Older payloads put global transforms on fresh Node3D
+# instances before adding them to fx_root; Godot 4.7.2 rejects that for look_at.
+old_tracer = '''    tracer.mesh = mesh\n    tracer.global_position = (from + to) * 0.5\n    tracer.look_at(to, Vector3.UP)\n    tracer.material_override = make_emissive_material(color, 4.0, 0.15)\n    fx_root.add_child(tracer)\n'''
+new_tracer = '''    tracer.mesh = mesh\n    tracer.material_override = make_emissive_material(color, 4.0, 0.15)\n    fx_root.add_child(tracer)\n    tracer.global_position = (from + to) * 0.5\n    tracer.look_at(to, Vector3.UP)\n'''
+if old_tracer in s:
+    s = s.replace(old_tracer, new_tracer, 1)
+elif new_tracer not in s:
+    raise SystemExit('tracer ordering block not recognized')
+
+old_flash = '''    flash.mesh = mesh\n    flash.global_position = pos\n    flash.material_override = make_emissive_material(Color("fff09a"), 6.0, 0.1)\n    fx_root.add_child(flash)\n'''
+new_flash = '''    flash.mesh = mesh\n    flash.material_override = make_emissive_material(Color("fff09a"), 6.0, 0.1)\n    fx_root.add_child(flash)\n    flash.global_position = pos\n'''
+if old_flash in s:
+    s = s.replace(old_flash, new_flash, 1)
+elif new_flash not in s:
+    raise SystemExit('muzzle ordering block not recognized')
+
 p.write_text(s)
