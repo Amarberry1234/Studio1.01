@@ -1,9 +1,11 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, ipcMain, dialog } = require("electron");
 const path = require("path");
 const http = require("http");
+const { registerCodeAgent } = require("./code-agent.cjs");
 
 const PORT = 31571;
 let mainWindow;
+let codeAgentRegistered = false;
 
 function waitForServer(url, timeoutMs = 20000) {
   const started = Date.now();
@@ -25,6 +27,12 @@ function waitForServer(url, timeoutMs = 20000) {
   });
 }
 
+function ensureDesktopCodeAgent() {
+  if (codeAgentRegistered) return;
+  registerCodeAgent({ ipcMain, dialog, getWindow: () => mainWindow });
+  codeAgentRegistered = true;
+}
+
 async function createWindow() {
   process.env.NODE_ENV = "production";
   process.env.NOVA_DESKTOP = "1";
@@ -32,20 +40,23 @@ async function createWindow() {
   process.env.NOVA_DATA_DIR = app.getPath("userData");
   process.env.NOVA_DIST_DIR = path.join(__dirname, "..", "dist");
 
+  ensureDesktopCodeAgent();
   require(path.join(__dirname, "..", "dist", "server.cjs"));
 
   mainWindow = new BrowserWindow({
-    width: 1500,
-    height: 950,
-    minWidth: 1100,
-    minHeight: 700,
-    backgroundColor: "#0a0a0a",
+    width: 1480,
+    height: 920,
+    minWidth: 1040,
+    minHeight: 680,
+    backgroundColor: "#09090b",
     show: false,
     autoHideMenuBar: true,
+    title: "Nova Local Studio",
     webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
     },
   });
 
