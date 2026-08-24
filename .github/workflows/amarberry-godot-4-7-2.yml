@@ -21,6 +21,7 @@ jobs:
           base64 -d payload.b64 > payload.tar.gz
           mkdir -p project
           tar -xzf payload.tar.gz -C project
+          cp ci/hud_3d.gd project/scripts/hud_3d.gd
           python3 - <<'PY'
           from pathlib import Path
           import struct, zlib, wave
