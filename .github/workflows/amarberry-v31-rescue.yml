@@ -17,7 +17,7 @@ jobs:
           set -euo pipefail
           cat ci/v31_payload_00.b64 ci/v31_payload_01.b64 ci/v31_payload_02.b64 ci/v31_payload_03.b64 ci/v31_payload_04.b64 > /tmp/v31_payload.b64
           base64 -d /tmp/v31_payload.b64 > /tmp/v31_code_payload.tar.gz
-          echo "2bb2a6b8f0ee6f39336e4a8ae3491d48935cbd5695f53389c3e5844ca4ebfb15  /tmp/v31_code_payload.tar.gz" | sha256sum -c -
+          echo "efd56b87626c2304865c6b256305a226f1424836daaa570e45c139d71d8790a0  /tmp/v31_code_payload.tar.gz" | sha256sum -c -
           gzip -t /tmp/v31_code_payload.tar.gz
           mkdir project
           tar -xzf /tmp/v31_code_payload.tar.gz -C project
