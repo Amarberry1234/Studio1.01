@@ -1,0 +1,2 @@
+AMARBERRY v3 final runtime verification trigger
+payload_sha256=e2be48669b848114d81fa3f7d46ee8a63d756094e629463c795833a2b35b08b0

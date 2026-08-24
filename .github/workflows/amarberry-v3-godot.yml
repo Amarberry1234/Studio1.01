@@ -1,0 +1,119 @@
+name: AMARBERRY v3 Godot 4.7.2 Runtime Validation
+
+on:
+  push:
+    branches: ["amarberry-v3-runtime-ci"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  godot-v3-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct exact V3 code payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat ci/v3_payload_00.b64 ci/v3_payload_01.b64 ci/v3_payload_02.b64 ci/v3_payload_03.b64 ci/v3_payload_04.b64 ci/v3_payload_05.b64 > /tmp/v3_payload.b64
+          base64 -d /tmp/v3_payload.b64 > /tmp/v3_code_payload.tar.gz
+          echo "83388910baa65adb8848469a90edacd653e2eb902b8e1aeb90ee4140ffb84e87  /tmp/v3_code_payload.tar.gz" | sha256sum -c -
+          mkdir -p project
+          tar -xzf /tmp/v3_code_payload.tar.gz -C project
+          test -z "$(grep -R ':=' project --include='*.gd' || true)"
+          echo '===== V3 SCRIPT SHA256 ====='
+          sha256sum project/scripts/*.gd project/tests/runtime/*.gd project/project.godot
+
+      - name: Generate deterministic CI media placeholders
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct, zlib, wave
+          root = Path('project')
+          (root/'textures'/'heroes').mkdir(parents=True, exist_ok=True)
+          (root/'textures'/'aliens').mkdir(parents=True, exist_ok=True)
+          (root/'audio').mkdir(parents=True, exist_ok=True)
+
+          def png(path, rgba):
+              w=h=64
+              rows=[]
+              for y in range(h):
+                  row=bytearray()
+                  for x in range(w):
+                      edge = 1 if 5 < x < 59 and 5 < y < 59 else 0
+                      a = rgba[3] if edge else 0
+                      row += bytes((rgba[0],rgba[1],rgba[2],a))
+                  rows.append(b'\x00'+bytes(row))
+              raw=b''.join(rows)
+              def chunk(t,d):
+                  return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+              data=(b'\x89PNG\r\n\x1a\n'+
+                    chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,6,0,0,0))+
+                    chunk(b'IDAT',zlib.compress(raw))+
+                    chunk(b'IEND',b''))
+              Path(path).write_bytes(data)
+
+          png(root/'textures'/'ground.png',(50,58,68,255))
+          png(root/'textures'/'icon.png',(200,40,65,255))
+          hero_colors={
+              'commando':(220,45,55,255),'guardian':(50,135,255,255),
+              'engineer':(235,120,35,255),'sniper':(165,65,245,255),
+              'dashberry':(245,70,165,255),'rageberry':(235,55,30,255),
+          }
+          for name,c in hero_colors.items(): png(root/'textures'/'heroes'/f'{name}.png',c)
+          alien_colors={
+              'swarmer':(65,220,105,255),'hunter':(65,160,235,255),
+              'spitter':(170,65,235,255),'brute':(220,85,45,255),
+              'boss':(200,35,100,255),'breeder':(180,45,210,255),
+          }
+          for name,c in alien_colors.items(): png(root/'textures'/'aliens'/f'{name}.png',c)
+          for name in ['rifle','shotgun','pulse','launcher','explosion','pickup','levelup','hurt','acid','ambient']:
+              with wave.open(str(root/'audio'/f'{name}.wav'),'wb') as f:
+                  f.setnchannels(1); f.setsampwidth(2); f.setframerate(22050); f.writeframes(b'\x00\x00'*5512)
+          PY
+
+      - name: Install official Godot 4.7.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+          chmod +x godot
+          ./godot --version
+
+      - name: Import resources and parse all scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --editor --path project --quit 2>&1 | tee import.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" import.log
+
+      - name: V3 smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --verbose --path project res://tests/runtime/smoke_3d.tscn --quit-after 900 2>&1 | tee smoke.log
+          grep -F "AMARBERRY_V3_SMOKE: PASS" smoke.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" smoke.log
+
+      - name: V3 extraction mission integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --verbose --path project res://tests/runtime/integration_3d.tscn --quit-after 1800 2>&1 | tee integration.log
+          grep -F "AMARBERRY_V3_INTEGRATION: PASS" integration.log
+          ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" integration.log
+
+      - name: Upload verified V3 project
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarberry-v3-godot-verified-project
+          path: project
+          if-no-files-found: error
