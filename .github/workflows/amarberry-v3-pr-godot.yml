@@ -20,16 +20,7 @@ jobs:
           echo "e2be48669b848114d81fa3f7d46ee8a63d756094e629463c795833a2b35b08b0  /tmp/v3_code_payload.tar.gz" | sha256sum -c -
           mkdir -p project
           tar -xzf /tmp/v3_code_payload.tar.gz -C project
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('project/scripts/main_3d.gd')
-          s=p.read_text()
-          old='    var s=SFX_RIFLE; if index==1:s=SFX_SHOTGUN; elif index==2:s=SFX_PULSE; play_sfx(s,-8.0,1.0)'
-          new='''    var s = SFX_RIFLE\n    if index == 1:\n        s = SFX_SHOTGUN\n    elif index == 2:\n        s = SFX_PULSE\n    play_sfx(s, -8.0, 1.0)'''
-          if old not in s:
-              raise SystemExit('Expected play_weapon_sound source was not found')
-          p.write_text(s.replace(old,new))
-          PY
+          python3 ci/v3_runtime_patch.py project
           test -z "$(grep -R ':=' project --include='*.gd' || true)"
           sha256sum project/scripts/*.gd project/tests/runtime/*.gd project/project.godot
 
