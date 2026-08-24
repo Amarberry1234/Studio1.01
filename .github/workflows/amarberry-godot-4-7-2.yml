@@ -51,6 +51,13 @@ jobs:
           chmod +x godot
           ./godot --version
 
+      - name: Import project resources and parse scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./godot --headless --editor --path project --quit 2>&1 | tee import.log
+          ! grep -E "SCRIPT ERROR|Parse Error|Cannot infer the type" import.log
+
       - name: Godot smoke test
         shell: bash
         run: |
