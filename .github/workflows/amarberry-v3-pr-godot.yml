@@ -15,9 +15,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat ci/v3_payload_00.b64 ci/v3_payload_01.b64 ci/v3_payload_02.b64 ci/v3_payload_03.b64 ci/v3_payload_04.b64 ci/v3_payload_05.b64 > /tmp/v3_payload.b64
+          cat ci/v3_payload_00.b64 ci/v3_payload_01.b64 ci/v3_payload_02.b64 ci/v3_payload_03.b64 > /tmp/v3_payload.b64
           base64 -d /tmp/v3_payload.b64 > /tmp/v3_code_payload.tar.gz
-          echo "83388910baa65adb8848469a90edacd653e2eb902b8e1aeb90ee4140ffb84e87  /tmp/v3_code_payload.tar.gz" | sha256sum -c -
+          echo "e2be48669b848114d81fa3f7d46ee8a63d756094e629463c795833a2b35b08b0  /tmp/v3_code_payload.tar.gz" | sha256sum -c -
           mkdir -p project
           tar -xzf /tmp/v3_code_payload.tar.gz -C project
           test -z "$(grep -R ':=' project --include='*.gd' || true)"
@@ -47,9 +47,21 @@ jobs:
               def chunk(t,d):
                   return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
               Path(path).write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b''))
-          png(root/'textures'/'ground.png',(50,58,68,255)); png(root/'textures'/'icon.png',(200,40,65,255))
-          for name,c in {'commando':(220,45,55,255),'guardian':(50,135,255,255),'engineer':(235,120,35,255),'sniper':(165,65,245,255),'dashberry':(245,70,165,255),'rageberry':(235,55,30,255)}.items(): png(root/'textures'/'heroes'/f'{name}.png',c)
-          for name,c in {'swarmer':(65,220,105,255),'hunter':(65,160,235,255),'spitter':(170,65,235,255),'brute':(220,85,45,255),'boss':(200,35,100,255),'breeder':(180,45,210,255)}.items(): png(root/'textures'/'aliens'/f'{name}.png',c)
+          png(root/'textures'/'ground.png',(50,58,68,255))
+          png(root/'textures'/'icon.png',(200,40,65,255))
+          hero_colors={
+              'commando':(220,45,55,255),'guardian':(50,135,255,255),
+              'engineer':(235,120,35,255),'sniper':(165,65,245,255),
+              'dashberry':(245,70,165,255),'rageberry':(235,55,30,255)
+          }
+          for name,c in hero_colors.items(): png(root/'textures'/'heroes'/f'{name}.png',c)
+          alien_colors={
+              'swarmer':(65,220,105,255),'hunter':(65,160,235,255),
+              'spitter':(170,65,235,255),'stalker':(90,240,180,255),
+              'artillery':(220,90,235,255),'breeder':(180,45,210,255),
+              'warden':(220,35,95,255),'matriarch':(205,45,225,255)
+          }
+          for name,c in alien_colors.items(): png(root/'textures'/'aliens'/f'{name}.png',c)
           for name in ['rifle','shotgun','pulse','launcher','explosion','pickup','levelup','hurt','acid','ambient']:
               with wave.open(str(root/'audio'/f'{name}.wav'),'wb') as f:
                   f.setnchannels(1); f.setsampwidth(2); f.setframerate(22050); f.writeframes(b'\x00\x00'*5512)
