@@ -1,6 +1,6 @@
 {
   "name": "Nova Local Studio",
-  "description": "Suite IA locale pour Ollama avec recherche Web, CoWork multi-agent, outils media locaux, generation de jeux et packaging Windows.",
+  "description": "Application Windows locale avec Ollama auto-détecté, recherche Web multi-source, CoWork multi-passes, outils projets, média local et génération de jeux.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
