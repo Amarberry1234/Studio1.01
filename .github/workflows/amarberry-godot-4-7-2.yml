@@ -22,6 +22,7 @@ jobs:
           mkdir -p project
           tar -xzf payload.tar.gz -C project
           cp ci/hud_3d.gd project/scripts/hud_3d.gd
+          python3 ci/patch_main_audio.py project/scripts/main_3d.gd
           python3 - <<'PY'
           from pathlib import Path
           import struct, zlib, wave
@@ -71,6 +72,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./godot --headless --path project res://tests/runtime/integration_3d.tscn --quit-after 1200 2>&1 | tee integration.log
+          ./godot --headless --verbose --path project res://tests/runtime/integration_3d.tscn --quit-after 1200 2>&1 | tee integration.log
           grep -F "AMARBERRY_3D_INTEGRATION: PASS" integration.log
           ! grep -E "ERROR:|SCRIPT ERROR|Parse Error|Cannot infer the type|leaked at exit|resources still in use" integration.log
