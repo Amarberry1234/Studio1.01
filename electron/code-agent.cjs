@@ -147,8 +147,28 @@ async function buildContext(root, files, prompt, extraPaths = []) {
 }
 
 async function ollamaRuntime(host, requestedModel) {
-  const base = cleanHost(host);
-  const response = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(4000) });
+  const preferredHost = cleanHost(host);
+  const novaPort = Number(process.env.NOVA_PORT || 31571);
+  try {
+    const discover = await fetch(`http://127.0.0.1:${novaPort}/api/ollama/discover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host: preferredHost, model: requestedModel, autoStart: true }),
+      signal: AbortSignal.timeout(18000),
+    });
+    if (discover.ok) {
+      const data = await discover.json();
+      if (data?.online && data?.selectedModel) {
+        return {
+          host: cleanHost(data.host || preferredHost),
+          model: String(data.selectedModel),
+          models: Array.isArray(data.models) ? data.models.map((m) => String(m.name || m.model || "")).filter(Boolean) : [],
+        };
+      }
+    }
+  } catch {}
+
+  const response = await fetch(`${preferredHost}/api/tags`, { signal: AbortSignal.timeout(5000) });
   if (!response.ok) throw new Error(`Ollama ne répond pas (${response.status}).`);
   const data = await response.json();
   const names = Array.isArray(data?.models) ? data.models.map((m) => String(m.name || m.model || "")).filter(Boolean) : [];
@@ -166,7 +186,7 @@ async function ollamaRuntime(host, requestedModel) {
       if (model) break;
     }
   }
-  return { host: base, model: model || names[0], models: names };
+  return { host: preferredHost, model: model || names[0], models: names };
 }
 
 function extractJson(text) {
