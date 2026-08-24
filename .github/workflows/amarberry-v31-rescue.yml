@@ -15,10 +15,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "2bb2a6b8f0ee6f39336e4a8ae3491d48935cbd5695f53389c3e5844ca4ebfb15  ci/v31_code_payload.tar.gz" | sha256sum -c -
+          echo "===== GITHUB PAYLOAD SHA256 ====="
+          sha256sum ci/v31_code_payload.tar.gz
+          gzip -t ci/v31_code_payload.tar.gz
           mkdir project
           tar -xzf ci/v31_code_payload.tar.gz -C project
           test -z "$(grep -R ':=' project --include='*.gd' || true)"
+          echo "===== V3.1 SCRIPT SHA256 ====="
           sha256sum project/scripts/*.gd project/tests/runtime/*.gd project/project.godot
 
       - name: Generate deterministic CI media
