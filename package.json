@@ -1,18 +1,21 @@
 {
-  "name": "react-example",
+  "name": "nova-local-studio",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.6.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
-    "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "dev": "tsx server-v2.ts",
+    "build": "vite build && esbuild server-v2.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
+    "selftest": "node scripts/selftest.mjs",
+    "codeagent:test": "node scripts/code-agent-test.cjs",
+    "desktop": "npm run build && npm run selftest && npm run codeagent:test && electron .",
+    "dist:win": "npm run build && npm run selftest && npm run codeagent:test && electron-builder --win nsis --publish never",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "canvas-confetti": "^1.9.4",
@@ -24,7 +27,9 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
+    "remark-gfm": "^4.0.1",
     "vite": "^6.2.3"
   },
   "devDependencies": {
@@ -33,10 +38,41 @@
     "@types/jszip": "^3.4.1",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
+  },
+  "build": {
+    "appId": "com.amarberry.novalocalstudio",
+    "productName": "Nova Local Studio",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nova Local Studio",
+      "artifactName": "Nova-Local-Studio-Setup-${version}.${ext}"
+    }
   }
 }

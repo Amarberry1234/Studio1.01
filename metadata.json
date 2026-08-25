@@ -1,6 +1,6 @@
 {
   "name": "Nova Local Studio",
-  "description": "Plateforme autonome locale 100% libre de droit : Swarm multi-agents CoWork (Reformulateur d'intentions, Grand Architecte, Senior Coder, Sentinelle Qualité Anti-Spaghetti, Scout Dropshipping, Arbitrage Marketplace, Idéateur IA Monétisable et Simulateur de Marges), jauge de puissance Swarm et interrupteurs d'agents, moteur d'auto-patching sécurisé, pack d'installation/désinstallation propre pour PC, lanceurs .BAT/.EXE 1-click, studio graphique canvas/logos et lab de jeux rétro.",
+  "description": "Application Windows locale avec Ollama auto-détecté, recherche Web multi-source, CoWork multi-passes, outils projets, média local et génération de jeux.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
