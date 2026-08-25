@@ -6,13 +6,10 @@ import {
   Search,
   Trash2,
   Lock,
-  Calendar,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   Edit2,
   Check,
-  FolderKanban,
 } from "lucide-react";
 
 interface ChatListSidebarProps {
@@ -78,7 +75,6 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
       id="chat-list-sidebar"
       className="w-64 border-r border-neutral-800 bg-neutral-950 flex flex-col h-full shrink-0 select-none z-10 text-neutral-200 text-xs"
     >
-      {/* Header with New Chat action */}
       <div className="p-3 border-b border-neutral-800 flex items-center justify-between">
         <button
           id="btn-new-chat-session"
@@ -97,7 +93,6 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
         </button>
       </div>
 
-      {/* Search Input */}
       <div className="p-2.5 border-b border-neutral-850">
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-neutral-500" />
@@ -112,7 +107,6 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
         </div>
       </div>
 
-      {/* Sessions List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {filteredSessions.length === 0 ? (
           <div className="text-center py-8 text-neutral-500 text-xs">
@@ -158,7 +152,9 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
                         <span className="truncate">{session.title}</span>
                       </span>
                       {session.isEncrypted && (
-                        <Lock className="w-3 h-3 text-emerald-400 shrink-0 ml-1" title="Chiffré AES-GCM" />
+                        <span className="shrink-0 ml-1" title="Chiffré AES-GCM">
+                          <Lock className="w-3 h-3 text-emerald-400" />
+                        </span>
                       )}
                     </div>
 
@@ -176,7 +172,6 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
                   </div>
                 )}
 
-                {/* Hover Actions: Rename & Delete */}
                 <div className="absolute right-2 top-2 hidden group-hover:flex items-center space-x-1 bg-neutral-900/90 p-0.5 rounded shadow">
                   <button
                     onClick={(e) => startRename(session, e)}
@@ -204,7 +199,6 @@ export const ChatListSidebar: React.FC<ChatListSidebarProps> = ({
         )}
       </div>
 
-      {/* Footer Info */}
       <div className="p-3 border-t border-neutral-850 bg-neutral-950/80 text-[10px] text-neutral-500 flex items-center justify-between">
         <span>Stockage Local Chiffré</span>
         <span className="font-mono text-emerald-400">100% Hors-Ligne</span>
