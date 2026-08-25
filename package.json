@@ -11,7 +11,7 @@
     "selftest": "node scripts/selftest.mjs",
     "codeagent:test": "node scripts/code-agent-test.cjs",
     "desktop": "npm run build && npm run selftest && npm run codeagent:test && electron .",
-    "dist:win": "npm run build && npm run selftest && npm run codeagent:test && electron-builder --win nsis",
+    "dist:win": "npm run build && npm run selftest && npm run codeagent:test && electron-builder --win nsis --publish never",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
